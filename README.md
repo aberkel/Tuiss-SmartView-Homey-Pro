@@ -8,10 +8,12 @@ The app recognizes these advertised device names from Tuiss2HA: TS3000, TS5200, 
 
 1. Make sure the motor already works in the Tuiss SmartView phone app. For the initial test, place the Homey Pro near the motor and close the phone app.
 2. Extract the ZIP file on your computer. Install Node.js and the Homey CLI with `npm install -g homey`.
-3. Open a terminal in the extracted `tuiss-homey` directory and run `npm install` and `homey login`.
-4. Run `npx homey app install` to install the app on your Homey.
-5. In the Homey app, select **Add device → Tuiss SmartView BLE → SmartView blind**, then select your motor.
-6. Test fully open and fully closed, then a middle position and Stop. If open and closed are reversed compared with the phone app, open the motor's **Advanced settings** in Homey and enable **Reverse direction**. This also works for an already paired motor.
+3. Open a terminal in the extracted `tuiss-homey` directory and run `npm install`.
+4. Sign in to the Homey CLI with `homey login`. A browser window opens: sign in with the **same Homey account that owns or can access your Homey Pro** and authorize the CLI. If no browser opens, copy the URL shown in the terminal into your browser. You do not need to enter your Homey password in the terminal.
+5. Run `homey select` and choose your Homey Pro from the list. If you have several Homeys, check your choice with `homey select current`. Your CLI sign-in and selected Homey are remembered for later updates; you normally only need to repeat these steps if you change accounts or Homeys.
+6. Run `npx homey app install` **from the `tuiss-homey` directory** to install the app on the selected Homey. Do not use `--clean` when updating an existing installation.
+7. In the Homey app, select **Add device → Tuiss SmartView BLE → SmartView blind**, then select your motor.
+8. Test fully open and fully closed, then a middle position and Stop. If open and closed are reversed compared with the phone app, open the motor's **Advanced settings** in Homey and enable **Reverse direction**. This also works for an already paired motor.
 
 ## Connection behavior and limitations
 
