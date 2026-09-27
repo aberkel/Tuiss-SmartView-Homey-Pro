@@ -1,0 +1,15 @@
+{
+  "id": "com.allard.tuisssmartview",
+  "version": "0.1.7",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "runtime": "nodejs",
+  "platforms": ["local"],
+  "brandColor": "#436B75",
+  "name": {"en": "Tuiss SmartView BLE", "nl": "Tuiss SmartView BLE"},
+  "description": {"en": "Control Tuiss SmartView blinds directly over Bluetooth", "nl": "Bedien Tuiss SmartView raamdecoratie rechtstreeks via Bluetooth"},
+  "category": "appliances",
+  "images": {"small": "/assets/images/small.png", "large": "/assets/images/large.png"},
+  "permissions": ["homey:wireless:ble"],
+  "author": {"name": "Allard van Berkel"}
+}

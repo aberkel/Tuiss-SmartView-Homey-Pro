@@ -1,0 +1,9 @@
+[
+  {
+    "id": "invertDirection",
+    "type": "checkbox",
+    "label": { "en": "Reverse direction", "nl": "Richting omkeren" },
+    "hint": { "en": "Swap open and closed for this blind in Homey.", "nl": "Verwissel open en dicht voor dit gordijn in Homey." },
+    "value": false
+  }
+]
