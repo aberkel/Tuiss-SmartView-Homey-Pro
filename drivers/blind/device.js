@@ -19,11 +19,16 @@ module.exports = class TuissBlind extends Homey.Device {
     // Older versions marked a transient BLE failure as device-unavailable.
     // That blocks Homey from sending a later command that could reconnect it.
     await this.setAvailable();
-    this.registerCapabilityListener('windowcoverings_set', value => this._move(value));
+    this.registerCapabilityListener('windowcoverings_set', value => this._acceptCommand(this._move(value)));
     this.registerCapabilityListener('windowcoverings_state', state => {
-      if (state === 'idle') return this._stop();
-      return this._move(state === 'up' ? 1 : 0);
+      return this._acceptCommand(state === 'idle' ? this._stop() : this._move(state === 'up' ? 1 : 0));
     });
+  }
+
+  _acceptCommand(pending) {
+    // Homey times out a capability request before a slow BLE scan and handshake
+    // can finish. The queued command keeps running after the listener returns.
+    pending.catch(error => this.error(`BLE: command failed after retries: ${error.message}`));
   }
 
   async _connect() {
@@ -121,6 +126,18 @@ module.exports = class TuissBlind extends Homey.Device {
     return pending;
   }
 
+  _enqueueReported(operation) {
+    return this._enqueue(async () => {
+      try {
+        await operation();
+        await this.setWarning(null).catch(err => this.error(`BLE: clear warning: ${err.message}`));
+      } catch (error) {
+        await this.setWarning(`Tuiss: ${error.message}`).catch(err => this.error(`BLE: show warning: ${err.message}`));
+        throw error;
+      }
+    });
+  }
+
   async _send(bytes) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -129,7 +146,7 @@ module.exports = class TuissBlind extends Homey.Device {
         await this._write.write(bytes);
         this.log('BLE: command sent');
         this._scheduleDisconnect();
-        await this.setAvailable();
+        await this.setAvailable().catch(err => this.error(`BLE: update availability: ${err.message}`));
         return;
       } catch (error) {
         await this._disconnect().catch(err => this.error(err));
@@ -145,7 +162,7 @@ module.exports = class TuissBlind extends Homey.Device {
   }
 
   _move(position) {
-    return this._enqueue(async () => {
+    return this._enqueueReported(async () => {
       await this._send(positionCommand(this._mapPosition(position)));
       this._target = position;
     });
@@ -156,7 +173,7 @@ module.exports = class TuissBlind extends Homey.Device {
   }
 
   _stop() {
-    return this._enqueue(async () => {
+    return this._enqueueReported(async () => {
       await this._send(STOP);
       this._target = null;
       if (this._disconnectTimer) this.homey.clearTimeout(this._disconnectTimer);

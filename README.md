@@ -7,7 +7,7 @@ The app recognizes these advertised device names from Tuiss2HA: TS3000, TS5200, 
 ## Install and pair
 
 1. Make sure the motor already works in the Tuiss SmartView phone app. For the initial test, place the Homey Pro near the motor and close the phone app.
-2. Install Node.js and the Homey CLI with `npm install -g homey`.
+2. Extract the ZIP file on your computer. Install Node.js and the Homey CLI with `npm install -g homey`.
 3. Open a terminal in the extracted `tuiss-homey` directory and run `npm install`.
 4. Sign in to the Homey CLI with `homey login`. A browser window opens: sign in with the **same Homey account that owns or can access your Homey Pro** and authorize the CLI. If no browser opens, copy the URL shown in the terminal into your browser. You do not need to enter your Homey password in the terminal.
 5. Run `homey select` and choose your Homey Pro from the list. If you have several Homeys, check your choice with `homey select current`. Your CLI sign-in and selected Homey are remembered for later updates; you normally only need to repeat these steps if you change accounts or Homeys.
@@ -17,7 +17,9 @@ The app recognizes these advertised device names from Tuiss2HA: TS3000, TS5200, 
 
 ## Connection behavior and limitations
 
-Version 0.1.7 retains the reconnection behavior tested with the TS5200 in version 0.1.5. The app releases the BLE connection after a command, normally after eight seconds or three seconds after receiving the target position. It also cleans up a connection dropped by the motor and scans again for the next command. The **Reverse direction** setting reverses commands, incoming position updates, and the position already shown in Homey.
+Version 0.1.8 retains the reconnection behavior tested with the TS5200 in version 0.1.5. The app releases the BLE connection after a command, normally after eight seconds or three seconds after receiving the target position. It also cleans up a connection dropped by the motor and scans again for the next command. The **Reverse direction** setting reverses commands, incoming position updates, and the position already shown in Homey.
+
+Homey acknowledges a control request immediately because discovering and connecting over BLE can take more than ten seconds. The command continues in the background, in order. If connecting or writing ultimately fails after retries, a warning appears on the device in Homey; a later successful command clears the warning. A successful BLE write does not prove that the blind has finished moving.
 
 Position changes made in the Tuiss phone app are not automatically reflected in Homey. Bluetooth range, characteristics, notifications, and pairing may vary by motor. Homey Bridge as a BLE satellite has not been tested.
 

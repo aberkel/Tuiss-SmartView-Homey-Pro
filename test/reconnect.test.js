@@ -92,6 +92,7 @@ test('motor disconnect releases the Homey connection and next command connects a
   device.log = () => {};
   device.error = err => { throw err; };
   device.setAvailable = async () => {};
+  device.setWarning = async () => {};
   device.getSetting = () => false;
   device.registerCapabilityListener = () => {};
   await device.onInit();
@@ -157,6 +158,7 @@ test('consecutive commands can reuse the active connection', async () => {
   device.getData = () => ({ id: 'aa:bb' });
   device.log = () => {};
   device.setAvailable = async () => {};
+  device.setWarning = async () => {};
   device.getSetting = () => false;
   device.registerCapabilityListener = () => {};
   await device.onInit();
@@ -175,6 +177,7 @@ test('reverse direction flips commands, notifications and the displayed position
   device._commandQueue = Promise.resolve();
   device._target = null;
   device.getSetting = () => inverted;
+  device.setWarning = async () => {};
   device._send = async bytes => { sent.push(bytes.toString('hex')); };
   device.getCapabilityValue = () => 0.25;
   device.setCapabilityValue = async (key, value) => { displayed.push([key, value]); };
@@ -190,4 +193,52 @@ test('reverse direction flips commands, notifications and the displayed position
   device._target = null;
   device._onNotification(Buffer.from([255, 120, 234, 65, 210, 0, 25, 0, 0]));
   assert.deepEqual(displayed.pop(), ['windowcoverings_set', 0.25]);
+});
+
+test('Homey receives an immediate acknowledgement while BLE is still connecting', async () => {
+  const device = new Blind();
+  let listener;
+  let finishConnection;
+  const warnings = [];
+  device.setAvailable = async () => {};
+  device.setWarning = async message => { warnings.push(message); };
+  device.getSetting = () => false;
+  device.registerCapabilityListener = (id, callback) => {
+    if (id === 'windowcoverings_set') listener = callback;
+  };
+  device._send = () => new Promise(resolve => { finishConnection = resolve; });
+  device.error = () => {};
+  await device.onInit();
+  assert.equal(listener(1), undefined);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof finishConnection, 'function');
+  assert.deepEqual(warnings, []);
+  finishConnection();
+  await device._commandQueue;
+  assert.deepEqual(warnings, [null]);
+});
+
+test('only a final BLE failure shows a warning, and a later success clears it', async () => {
+  const device = new Blind();
+  let listener;
+  const warnings = [];
+  const errors = [];
+  let fail = true;
+  device.setAvailable = async () => {};
+  device.setWarning = async message => { warnings.push(message); };
+  device.getSetting = () => false;
+  device.registerCapabilityListener = (id, callback) => {
+    if (id === 'windowcoverings_set') listener = callback;
+  };
+  device._send = async () => { if (fail) throw new Error('Motor niet gevonden'); };
+  device.error = message => { errors.push(message); };
+  await device.onInit();
+  assert.equal(listener(0), undefined);
+  await device._commandQueue;
+  assert.deepEqual(warnings, ['Tuiss: Motor niet gevonden']);
+  fail = false;
+  assert.equal(listener(1), undefined);
+  await device._commandQueue;
+  assert.deepEqual(warnings, ['Tuiss: Motor niet gevonden', null]);
+  assert.ok(errors.some(message => String(message).includes('command failed')));
 });
