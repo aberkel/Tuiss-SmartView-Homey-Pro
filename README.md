@@ -27,35 +27,35 @@ The screenshots show a **Tuiss TS5200**. Other motors may advertise a different 
 
 1. In Homey, add a Tuiss SmartView BLE device and choose **SmartView blind**.
 
-   ![Choose the SmartView blind device type in Homey](docs/images/01-choose-blind.png)
+   <a href="docs/images/01-choose-blind.png"><img src="docs/images/01-choose-blind.png" alt="Choose the SmartView blind device type in Homey" width="320"></a>
 
 2. Tap **Connect**. Press and hold the button on the blind's motor for about **four seconds**. The blind moves briefly to acknowledge the button press and becomes discoverable for a short time. If the scan misses it, repeat this step.
 
-   ![Connect screen for the SmartView blind](docs/images/02-connect.png)
+   <a href="docs/images/02-connect.png"><img src="docs/images/02-connect.png" alt="Connect screen for the SmartView blind" width="320"></a>
 
 3. Select the motor that Homey finds and tap **Continue**. This example appears as **Tuiss TS5200**; confirm it is your own motor before continuing.
 
-   ![A Tuiss TS5200 found by Homey](docs/images/03-found-device.png)
+   <a href="docs/images/03-found-device.png"><img src="docs/images/03-found-device.png" alt="A Tuiss TS5200 found by Homey" width="320"></a>
 
 4. Choose a name and zone, then tap **Finish**.
 
-   ![Choose the motor name and zone](docs/images/04-name-and-zone.png)
+   <a href="docs/images/04-name-and-zone.png"><img src="docs/images/04-name-and-zone.png" alt="Choose the motor name and zone" width="320"></a>
 
 5. Homey shows the available Flow cards after pairing. Tap **Got it** to finish.
 
-   ![Flow cards offered after pairing](docs/images/05-flow-cards.png)
+   <a href="docs/images/05-flow-cards.png"><img src="docs/images/05-flow-cards.png" alt="Flow cards offered after pairing" width="320"></a>
 
 ## Controls and direction
 
 Open the paired device in Homey to move the blind and set a position. The screen below shows the device controls.
 
-![Blind controls in the Homey app](docs/images/06-controls.png)
+<a href="docs/images/06-controls.png"><img src="docs/images/06-controls.png" alt="Blind controls in the Homey app" width="320"></a>
 
 If Homey opens the blind when the Tuiss phone app closes it, open the device's **Advanced settings** and select **Reverse direction**. Enable the switch and save the setting. This swaps open and closed as well as the displayed position; it does not change the motor's hardware calibration.
 
-![Reverse direction in advanced settings](docs/images/07-advanced-settings.png)
+<a href="docs/images/07-advanced-settings.png"><img src="docs/images/07-advanced-settings.png" alt="Reverse direction in advanced settings" width="320"></a>
 
-![Enable the Reverse direction switch](docs/images/08-reverse-direction.png)
+<a href="docs/images/08-reverse-direction.png"><img src="docs/images/08-reverse-direction.png" alt="Enable the Reverse direction switch" width="320"></a>
 
 These screenshots are part of this source package and illustrate the mobile app; Homey's App Store `README.txt` is plain text and will not display embedded images.
 
@@ -65,11 +65,11 @@ Version 0.2.1 adds calibration buttons under the paired blind's **Settings → M
 
 Open the blind's **Settings** and tap **Maintenance**, as shown below.
 
-![Open Maintenance from the blind device settings](docs/images/09-settings-maintenance.png)
+<a href="docs/images/09-settings-maintenance.png"><img src="docs/images/09-settings-maintenance.png" alt="Open Maintenance from the blind device settings" width="320"></a>
 
 The maintenance screen contains **Set limits**, **Step up**, **Step down**, **Save limit** and **Stop setup**.
 
-![Calibration controls while connecting to the motor](docs/images/10-limit-controls.png)
+<a href="docs/images/10-limit-controls.png"><img src="docs/images/10-limit-controls.png" alt="Calibration controls while connecting to the motor" width="320"></a>
 
 This screenshot was taken while connecting: **Save limit** has not yet changed to a named endpoint. The green **Maintenance action completed** banner confirms that Homey accepted the button request; it does not mean both motor limits have been saved. Wait for the connection to complete and the save button to show an endpoint before continuing. **Try to Repair** opens the alternative guided wizard; it is not needed for the maintenance-button procedure.
 
