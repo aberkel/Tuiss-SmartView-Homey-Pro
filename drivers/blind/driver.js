@@ -3,6 +3,14 @@ const Homey = require('homey');
 const { isTuissName } = require('../../lib/protocol');
 
 module.exports = class TuissDriver extends Homey.Driver {
+  onRepair(session, device) {
+    const owner = { phase: 'ready', busy: false, error: null };
+    session.setHandler('limits_status', () => ({ ...owner,
+      inverted: device.getSetting('invertDirection') === true }));
+    session.setHandler('limits_action', action => device.requestLimits(owner, action));
+    session.setHandler('disconnect', () => device.closeLimits(owner));
+  }
+
   async onPairListDevices() {
     const advertisements = await this.homey.ble.discover();
     const seen = new Set();
