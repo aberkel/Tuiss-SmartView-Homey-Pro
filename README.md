@@ -4,6 +4,12 @@ Version **0.2.1**. An experimental Homey SDK v3 app that controls Tuiss SmartVie
 
 The app recognizes these advertised device names from Tuiss2HA: TS3000, TS5200, TS5300, TS2600, TS2900, TS5001, and TS5101. MRM-G2 and MHC-G2 are also included as possible names, although the model printed on a motor does not necessarily match its BLE advertisement. If the scan finds no recognized names, the pairing screen lists other connectable BLE devices so you can identify your motor by its address. Only select a device you can positively identify as your motor. The motor must be within Bluetooth range of your Homey Pro.
 
+## Documentation and source
+
+The project repository is [aberkel/Tuiss-SmartView-Homey-Pro](https://github.com/aberkel/Tuiss-SmartView-Homey-Pro). This README contains the illustrated installation, pairing, direction and motor-limit guides. The Homey App Store displays the plain-text README instead; use the app's website or source link to open this illustrated guide on GitHub.
+
+When uploading or updating this project on GitHub, keep **README.md** at the repository root and upload the **docs/images/** folder alongside it. The screenshots below use relative links so they display both on GitHub and in the extracted source package.
+
 ## Install and pair
 
 1. Make sure the motor already works in the Tuiss SmartView phone app. For the initial test, place the Homey Pro near the motor and close the phone app.
@@ -55,7 +61,17 @@ These screenshots are part of this source package and illustrate the mobile app;
 
 ## Set motor end limits (experimental)
 
-Version 0.2.1 adds calibration buttons under the paired blind's **Settings → Maintenance actions** (Dutch: **Instellingen → Onderhoudsacties**). Existing devices gain these buttons automatically after updating the app; do not remove and pair the motor again.
+Version 0.2.1 adds calibration buttons under the paired blind's **Settings → Maintenance** (called **Maintenance actions** in some Homey versions; Dutch: **Instellingen → Onderhoud / Onderhoudsacties**). Existing devices gain these buttons automatically after updating the app; do not remove and pair the motor again.
+
+Open the blind's **Settings** and tap **Maintenance**, as shown below.
+
+![Open Maintenance from the blind device settings](docs/images/09-settings-maintenance.png)
+
+The maintenance screen contains **Set limits**, **Step up**, **Step down**, **Save limit** and **Stop setup**.
+
+![Calibration controls while connecting to the motor](docs/images/10-limit-controls.png)
+
+This screenshot was taken while connecting: **Save limit** has not yet changed to a named endpoint. The green **Maintenance action completed** banner confirms that Homey accepted the button request; it does not mean both motor limits have been saved. Wait for the connection to complete and the save button to show an endpoint before continuing. **Try to Repair** opens the alternative guided wizard; it is not needed for the maintenance-button procedure.
 
 1. Close the Tuiss phone app, pause Flows controlling this blind and stay near the blind. Keep the movement path clear. Starting setup replaces both hardware endpoints; it does not just change Homey's percentage display.
 2. Tap **Set limits** and confirm the action. This starts setup directly from the settings; it does not open a separate screen. Wait until **Save limit** changes to **Save lower limit** or **Save upper limit**. The description of **Set limits** shows connection progress and the current step.
@@ -71,7 +87,7 @@ Interrupted configuration cannot restore the previous limits: set **both** endpo
 
 The previous guided wizard remains available through **Settings → Repair → Set limits** (Dutch: **Instellingen → Repareren → Set limits**) as an alternative. Use one method for the whole session: maintenance buttons cannot take over a session started through Repair, and vice versa. Closing the Repair wizard ends its session.
 
-The implementation follows Tuiss2HA's limit-setting protocol. Software tests cover the calibration command order, device upgrades, maintenance controls, connection ownership, direction reversal and interruption handling. **Calibration and the maintenance UI have not yet been tested on a physical Homey/motor.** Successful writes mean the commands were sent; verify the actual endpoints yourself. Existing pairing/control screenshots show an older version and do not show the new calibration controls.
+The implementation follows Tuiss2HA's limit-setting protocol. Software tests cover the calibration command order, device upgrades, maintenance controls, connection ownership, direction reversal and interruption handling. The screenshots show the maintenance UI on a Homey installation. **Successful end-to-end motor calibration has not yet been confirmed.** Successful writes mean the commands were sent; verify the actual endpoints yourself. The original pairing/control screenshots show an older version; the two maintenance screenshots show the controls added in v0.2.1.
 
 ## Connection behavior and limitations
 

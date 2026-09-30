@@ -28,6 +28,8 @@
   "author": {
     "name": "Allard van Berkel"
   },
+  "source": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro",
+  "homepage": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro",
   "drivers": [
     {
       "name": {
