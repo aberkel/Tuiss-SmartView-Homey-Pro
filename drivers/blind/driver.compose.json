@@ -1,11 +1,108 @@
 {
-  "name": {"en": "SmartView blind", "nl": "SmartView raamdecoratie"},
+  "name": {
+    "en": "SmartView blind",
+    "nl": "SmartView raamdecoratie"
+  },
   "class": "blinds",
-  "capabilities": ["windowcoverings_set", "windowcoverings_state"],
-  "connectivity": ["ble"],
-  "images": {"small": "/drivers/blind/assets/images/small.png", "large": "/drivers/blind/assets/images/large.png"},
+  "capabilities": [
+    "windowcoverings_set",
+    "windowcoverings_state",
+    "button.limits_start",
+    "button.limits_up",
+    "button.limits_down",
+    "button.limits_save",
+    "button.limits_end"
+  ],
+  "connectivity": [
+    "ble"
+  ],
+  "images": {
+    "small": "/drivers/blind/assets/images/small.png",
+    "large": "/drivers/blind/assets/images/large.png"
+  },
+  "repair": [
+    {
+      "id": "limits"
+    }
+  ],
   "pair": [
-    {"id": "list_devices", "template": "list_devices", "navigation": {"next": "add_devices"}},
-    {"id": "add_devices", "template": "add_devices"}
-  ]
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "capabilitiesOptions": {
+    "button.limits_start": {
+      "maintenanceAction": true,
+      "preventInsights": true,
+      "preventTag": true,
+      "title": {
+        "en": "Set limits",
+        "nl": "Set limits"
+      },
+      "desc": {
+        "en": "Replace both motor limits. Stay with the blind and keep its path clear. Close the Tuiss app, pause Flows, then save both endpoints using the step and save buttons.",
+        "nl": "Replace both motor limits. Stay with the blind and keep its path clear. Close the Tuiss app, pause Flows, then save both endpoints using the step and save buttons."
+      }
+    },
+    "button.limits_up": {
+      "maintenanceAction": true,
+      "preventInsights": true,
+      "preventTag": true,
+      "title": {
+        "en": "Step up",
+        "nl": "Step up"
+      },
+      "desc": {
+        "en": "Move one small step up during limit setup. Direction follows Reverse direction. Start Set limits first.",
+        "nl": "Move one small step up during limit setup. Direction follows Reverse direction. Start Set limits first."
+      }
+    },
+    "button.limits_down": {
+      "maintenanceAction": true,
+      "preventInsights": true,
+      "preventTag": true,
+      "title": {
+        "en": "Step down",
+        "nl": "Step down"
+      },
+      "desc": {
+        "en": "Move one small step down during limit setup. Direction follows Reverse direction. Start Set limits first.",
+        "nl": "Move one small step down during limit setup. Direction follows Reverse direction. Start Set limits first."
+      }
+    },
+    "button.limits_save": {
+      "maintenanceAction": true,
+      "preventInsights": true,
+      "preventTag": true,
+      "title": {
+        "en": "Save limit",
+        "nl": "Save limit"
+      },
+      "desc": {
+        "en": "Save the current endpoint during setup. Read the Set limits description for the current step. Both endpoints must be saved in sequence.",
+        "nl": "Save the current endpoint during setup. Read the Set limits description for the current step. Both endpoints must be saved in sequence."
+      }
+    },
+    "button.limits_end": {
+      "maintenanceAction": true,
+      "preventInsights": true,
+      "preventTag": true,
+      "title": {
+        "en": "Stop setup",
+        "nl": "Stop setup"
+      },
+      "desc": {
+        "en": "Stop the motor and end setup. This does not restore the old limits. If interrupted, configure both endpoints again.",
+        "nl": "Stop the motor and end setup. This does not restore the old limits. If interrupted, configure both endpoints again."
+      }
+    }
+  }
 }

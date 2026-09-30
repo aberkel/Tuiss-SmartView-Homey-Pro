@@ -5,7 +5,7 @@ const Module = require('node:module');
 
 const load = Module._load;
 Module._load = function (request, parent, isMain) {
-  if (request === 'homey') return { Device: class {} };
+  if (request === 'homey') return { Device: require('./fake-device') };
   return load.call(this, request, parent, isMain);
 };
 const Blind = require('../drivers/blind/device');

@@ -1,10 +1,14 @@
 {
   "name": "com.allard.tuisssmartview",
-  "version": "0.1.8",
+  "version": "0.2.1",
   "private": true,
   "description": "Local BLE control for Tuiss SmartView blinds on Homey Pro",
   "license": "GPL-3.0-only",
   "main": "app.js",
-  "scripts": {"test": "node --test test/*.test.js"},
-  "dependencies": {"homey": "^3.0.0"}
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "homey": "^3.0.0"
+  }
 }

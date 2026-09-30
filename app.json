@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.allard.tuisssmartview",
-  "version": "0.1.9",
+  "version": "0.2.1",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "runtime": "nodejs",
@@ -17,7 +17,6 @@
     "en": "Control Tuiss SmartView blinds directly over Bluetooth",
     "nl": "Bedien Tuiss SmartView raamdecoratie rechtstreeks via Bluetooth"
   },
-  "homeyCommunityTopicId": 136721,
   "category": "appliances",
   "images": {
     "small": "/assets/images/small.png",
@@ -29,6 +28,8 @@
   "author": {
     "name": "Allard van Berkel"
   },
+  "source": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro",
+  "homepage": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro",
   "drivers": [
     {
       "name": {
@@ -38,7 +39,12 @@
       "class": "blinds",
       "capabilities": [
         "windowcoverings_set",
-        "windowcoverings_state"
+        "windowcoverings_state",
+        "button.limits_start",
+        "button.limits_up",
+        "button.limits_down",
+        "button.limits_save",
+        "button.limits_end"
       ],
       "connectivity": [
         "ble"
@@ -47,6 +53,11 @@
         "small": "/drivers/blind/assets/images/small.png",
         "large": "/drivers/blind/assets/images/large.png"
       },
+      "repair": [
+        {
+          "id": "limits"
+        }
+      ],
       "pair": [
         {
           "id": "list_devices",
@@ -60,6 +71,73 @@
           "template": "add_devices"
         }
       ],
+      "capabilitiesOptions": {
+        "button.limits_start": {
+          "maintenanceAction": true,
+          "preventInsights": true,
+          "preventTag": true,
+          "title": {
+            "en": "Set limits",
+            "nl": "Set limits"
+          },
+          "desc": {
+            "en": "Replace both motor limits. Stay with the blind and keep its path clear. Close the Tuiss app, pause Flows, then save both endpoints using the step and save buttons.",
+            "nl": "Replace both motor limits. Stay with the blind and keep its path clear. Close the Tuiss app, pause Flows, then save both endpoints using the step and save buttons."
+          }
+        },
+        "button.limits_up": {
+          "maintenanceAction": true,
+          "preventInsights": true,
+          "preventTag": true,
+          "title": {
+            "en": "Step up",
+            "nl": "Step up"
+          },
+          "desc": {
+            "en": "Move one small step up during limit setup. Direction follows Reverse direction. Start Set limits first.",
+            "nl": "Move one small step up during limit setup. Direction follows Reverse direction. Start Set limits first."
+          }
+        },
+        "button.limits_down": {
+          "maintenanceAction": true,
+          "preventInsights": true,
+          "preventTag": true,
+          "title": {
+            "en": "Step down",
+            "nl": "Step down"
+          },
+          "desc": {
+            "en": "Move one small step down during limit setup. Direction follows Reverse direction. Start Set limits first.",
+            "nl": "Move one small step down during limit setup. Direction follows Reverse direction. Start Set limits first."
+          }
+        },
+        "button.limits_save": {
+          "maintenanceAction": true,
+          "preventInsights": true,
+          "preventTag": true,
+          "title": {
+            "en": "Save limit",
+            "nl": "Save limit"
+          },
+          "desc": {
+            "en": "Save the current endpoint during setup. Read the Set limits description for the current step. Both endpoints must be saved in sequence.",
+            "nl": "Save the current endpoint during setup. Read the Set limits description for the current step. Both endpoints must be saved in sequence."
+          }
+        },
+        "button.limits_end": {
+          "maintenanceAction": true,
+          "preventInsights": true,
+          "preventTag": true,
+          "title": {
+            "en": "Stop setup",
+            "nl": "Stop setup"
+          },
+          "desc": {
+            "en": "Stop the motor and end setup. This does not restore the old limits. If interrupted, configure both endpoints again.",
+            "nl": "Stop the motor and end setup. This does not restore the old limits. If interrupted, configure both endpoints again."
+          }
+        }
+      },
       "id": "blind",
       "settings": [
         {

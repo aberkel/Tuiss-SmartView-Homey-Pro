@@ -1,6 +1,6 @@
 {
   "id": "com.allard.tuisssmartview",
-  "version": "0.1.9",
+  "version": "0.2.1",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "runtime": "nodejs",
@@ -16,7 +16,6 @@
     "en": "Control Tuiss SmartView blinds directly over Bluetooth",
     "nl": "Bedien Tuiss SmartView raamdecoratie rechtstreeks via Bluetooth"
   },
-  "homeyCommunityTopicId": 136721,
   "category": "appliances",
   "images": {
     "small": "/assets/images/small.png",
@@ -27,5 +26,7 @@
   ],
   "author": {
     "name": "Allard van Berkel"
-  }
+  },
+  "source": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro",
+  "homepage": "https://github.com/aberkel/Tuiss-SmartView-Homey-Pro"
 }

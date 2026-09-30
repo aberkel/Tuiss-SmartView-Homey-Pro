@@ -1,8 +1,9 @@
 'use strict';
 const Homey = require('homey');
 const { isTuissName } = require('../../lib/protocol');
+const limitControls = require('../../lib/limit-controls');
 const {
-  WRITE_UUID, NOTIFY_UUID, CONNECT, STOP,
+  WRITE_UUID, NOTIFY_UUID, CONNECT, STOP, LIMITS,
   positionCommand, timestampCommand, parseMovement,
 } = require('../../lib/protocol');
 
@@ -16,13 +17,72 @@ module.exports = class TuissBlind extends Homey.Device {
     this._disconnectTimer = null;
     this._commandQueue = Promise.resolve();
     this._target = null;
+    this._limits = null;
+    this._limitsTimer = null;
+    this._maintenanceOwner = null;
+    this._limitsUiQueue = Promise.resolve();
+    this._limitsIncomplete = this.getStore?.().limitsIncomplete === true;
     // Older versions marked a transient BLE failure as device-unavailable.
     // That blocks Homey from sending a later command that could reconnect it.
     await this.setAvailable();
+    if (this._limitsIncomplete) await this.setWarning('Tuiss: finish setting both motor limits using Set limits or the Tuiss app');
     this.registerCapabilityListener('windowcoverings_set', value => this._acceptCommand(this._move(value)));
     this.registerCapabilityListener('windowcoverings_state', state => {
       return this._acceptCommand(state === 'idle' ? this._stop() : this._move(state === 'up' ? 1 : 0));
     });
+    await this._initLimitControls();
+  }
+
+  async _initLimitControls() {
+    // Adding only missing capabilities preserves paired IDs, settings and Flows.
+    for (const control of limitControls.controls) {
+      if (!this.hasCapability(control.id)) await this.addCapability(control.id);
+      await this._applyLimitControlOptions(control.id, limitControls.options(control));
+      this.registerCapabilityListener(control.id, () => this._maintenanceLimits(control.action));
+    }
+    await this._publishLimitControls();
+  }
+
+  _maintenanceLimits(action) {
+    if (action === 'start') {
+      if (this._limits) throw new Error('Limit setup is already active. Complete it or press Stop setup.');
+      this._maintenanceOwner = { phase: 'ready', busy: false, error: null };
+      this.requestLimits(this._maintenanceOwner, action);
+    } else {
+      const owner = this._maintenanceOwner;
+      if (!owner || this._limits !== owner) throw new Error('Start Set limits first. If using Repair, finish setup in that screen.');
+      if (action === 'close') {
+        // Cancellation also works during discovery or a pending write.
+        this.closeLimits(owner).catch(err => this.error(`BLE: stop setup: ${err.message}`));
+      } else {
+        this.requestLimits(owner, action);
+      }
+    }
+    // Return immediately, like normal control: BLE discovery can exceed 10s.
+  }
+
+  _publishLimitControls() {
+    this._limitsUiQueue = this._limitsUiQueue.then(async () => {
+      const owner = this._limits || this._maintenanceOwner;
+      const description = limitControls.progress(owner, this._limitsIncomplete);
+      const start = limitControls.options(limitControls.controls[0]);
+      if (description) start.desc = { en: description, nl: description };
+      const save = limitControls.options(limitControls.controls.find(control => control.action === 'save'));
+      if (owner && ['lower', 'upper'].includes(owner.phase)) {
+        const title = (owner.phase === 'lower') !== owner.inverted ? 'Save lower limit' : 'Save upper limit';
+        save.title = { en: title, nl: title };
+        save.desc = { en: description, nl: description };
+      }
+      await this._applyLimitControlOptions('button.limits_start', start);
+      await this._applyLimitControlOptions('button.limits_save', save);
+    }).catch(err => this.error(`Homey: update limit controls: ${err.message}`));
+    return this._limitsUiQueue;
+  }
+
+  async _applyLimitControlOptions(id, options) {
+    const current = this.getCapabilityOptions(id) || {};
+    if (Object.entries(options).every(([key, value]) => JSON.stringify(current[key]) === JSON.stringify(value))) return;
+    await this.setCapabilityOptions(id, options);
   }
 
   _acceptCommand(pending) {
@@ -62,6 +122,7 @@ module.exports = class TuissBlind extends Homey.Device {
       if (this._peripheral !== peripheral) return;
       this.log('BLE: motor disconnected; releasing Homey BLE connection');
       this._enqueue(() => {
+        if (this._limits) return this._finishLimits(this._limits, false, 'Bluetooth disconnected. Set both limits again.');
         if (this._peripheral === peripheral) return this._disconnect();
       }).catch(err => this.error(`BLE: disconnect cleanup: ${err.message}`));
     });
@@ -97,6 +158,8 @@ module.exports = class TuissBlind extends Homey.Device {
 
   _scheduleDisconnect() {
     if (this._disconnectTimer) this.homey.clearTimeout(this._disconnectTimer);
+    this._disconnectTimer = null;
+    if (this._limits) return;
     this._disconnectTimer = this.homey.setTimeout(() => {
       this._enqueue(() => this._disconnect()).catch(err => this.error(err));
     }, 8000);
@@ -130,7 +193,7 @@ module.exports = class TuissBlind extends Homey.Device {
     return this._enqueue(async () => {
       try {
         await operation();
-        await this.setWarning(null).catch(err => this.error(`BLE: clear warning: ${err.message}`));
+        if (!this._limitsIncomplete) await this.setWarning(null).catch(err => this.error(`BLE: clear warning: ${err.message}`));
       } catch (error) {
         await this.setWarning(`Tuiss: ${error.message}`).catch(err => this.error(`BLE: show warning: ${err.message}`));
         throw error;
@@ -139,6 +202,7 @@ module.exports = class TuissBlind extends Homey.Device {
   }
 
   async _send(bytes) {
+    if (this._limits) throw new Error('Motor limits are being configured; finish or close the setup first');
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         this.log(`BLE: command attempt ${attempt + 1}/3`);
@@ -184,6 +248,7 @@ module.exports = class TuissBlind extends Homey.Device {
   }
 
   _onNotification(data) {
+    if (this._limits) return;
     const motorPosition = parseMovement(data);
     if (motorPosition === null) return;
     const position = this._mapPosition(motorPosition);
@@ -200,6 +265,7 @@ module.exports = class TuissBlind extends Homey.Device {
 
   async onSettings({ changedKeys }) {
     if (!changedKeys.includes('invertDirection')) return;
+    if (this._limits) throw new Error('Finish motor limit setup before changing direction');
     const position = this.getCapabilityValue('windowcoverings_set');
     if (typeof position === 'number' && Number.isFinite(position)) {
       await this.setCapabilityValue('windowcoverings_set', 1 - position);
@@ -208,6 +274,106 @@ module.exports = class TuissBlind extends Homey.Device {
   }
 
   async onUninit() {
+    if (this._limits) await this.closeLimits(this._limits);
     await this._disconnect();
+  }
+
+  // Custom repair requests return immediately; polling shows progress even if
+  // discovery takes longer than Homey's request timeout. Calibration writes
+  // are never retried: repeating SET could save the wrong endpoint.
+  requestLimits(owner, action) {
+    if (owner.busy) throw new Error('Wait for the current operation to finish');
+    if (!['start', 'up', 'down', 'stop', 'save', 'close'].includes(action)) throw new Error('Unknown action');
+    if (action === 'start') {
+      if (this._limits || owner.phase !== 'ready') throw new Error('Setup already started');
+      this._limits = owner;
+      owner.phase = 'connecting';
+      owner.inverted = this.getSetting('invertDirection') === true;
+      this._target = null;
+      this._scheduleDisconnect();
+    } else if (this._limits !== owner || !['lower', 'upper'].includes(owner.phase)) {
+      throw new Error('Start a new setup session first');
+    }
+    owner.busy = true;
+    this._publishLimitControls();
+    this._enqueue(async () => {
+      try {
+        if (action === 'start') {
+          await this._connect();
+          if (owner.closed) throw new Error('Setup closed before calibration started');
+          // Persist before the first calibration write, including an uncertain
+          // write failure or an app restart midway through configuration.
+          await this.setStoreValue('limitsIncomplete', true);
+          this._limitsIncomplete = true;
+          await this._limitsWrite(owner, LIMITS.initialise);
+          await this._limitsWrite(owner, LIMITS.enter);
+          owner.phase = 'lower';
+        } else if (action === 'close') {
+          await this._finishLimits(owner, false);
+        } else if (action === 'save') {
+          await this._limitsWrite(owner, STOP);
+          await this._limitsWrite(owner, LIMITS.set);
+          if (owner.phase === 'lower') owner.phase = 'upper';
+          else {
+            await this.setStoreValue('limitsIncomplete', false);
+            this._limitsIncomplete = false;
+            await this.setWarning(null);
+            await this._finishLimits(owner, true);
+          }
+        } else {
+          const direction = owner.inverted && action !== 'stop'
+            ? (action === 'up' ? 'down' : 'up') : action;
+          await this._limitsWrite(owner, direction === 'stop' ? STOP : LIMITS[direction]);
+        }
+        if (this._limits === owner) this._refreshLimitsTimer(owner);
+      } catch (error) {
+        this.error(`BLE: motor limit setup: ${error.message}`);
+        await this._finishLimits(owner, false, error.message).catch(err => this.error(err));
+      } finally {
+        owner.busy = false;
+        await this._publishLimitControls();
+      }
+    }).catch(err => this.error(err));
+    return { ...owner };
+  }
+
+  async _limitsWrite(owner, bytes) {
+    if (owner.closed || this._limits !== owner || !this._peripheral?.isConnected || !this._write) {
+      throw new Error('Bluetooth disconnected. Set both limits again.');
+    }
+    await this._write.write(bytes);
+  }
+
+  _refreshLimitsTimer(owner) {
+    if (this._limitsTimer) this.homey.clearTimeout(this._limitsTimer);
+    this._limitsTimer = this.homey.setTimeout(() => {
+      this._enqueue(() => this._finishLimits(owner, false, 'Setup timed out after 3 minutes of inactivity.'))
+        .catch(err => this.error(err));
+    }, 180000);
+  }
+
+  closeLimits(owner) {
+    owner.closed = true;
+    return this._enqueue(() => this._finishLimits(owner, false));
+  }
+
+  async _finishLimits(owner, complete, error) {
+    if (this._limits !== owner) return;
+    if (this._limitsTimer) this.homey.clearTimeout(this._limitsTimer);
+    this._limitsTimer = null;
+    owner.phase = complete ? 'done' : 'failed';
+    owner.error = error || (complete ? null : 'Setup closed. Set both limits again before using the blind.');
+    if (!complete && this._peripheral?.isConnected && this._write) {
+      await this._write.write(STOP).catch(err => this.error(`BLE: calibration stop: ${err.message}`));
+    }
+    this._limits = null;
+    if (this._limitsIncomplete) {
+      await this.setWarning('Tuiss: finish setting both motor limits using Set limits or the Tuiss app')
+        .catch(err => this.error(err));
+    } else if (!complete && error) {
+      await this.setWarning(`Tuiss: ${error}`).catch(err => this.error(err));
+    }
+    await this._disconnect();
+    await this._publishLimitControls();
   }
 };
