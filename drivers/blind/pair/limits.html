@@ -1,0 +1,70 @@
+<style>
+  .limits { padding: 12px; }
+  .limits p { line-height: 1.5; }
+  .limits button { padding: 12px 16px; margin: 5px 4px 5px 0; font: inherit; }
+  #status { min-height: 3em; }
+  #error { color: #b3261e; white-space: pre-wrap; }
+</style>
+<div class="limits">
+  <h2>Set limits</h2>
+  <p>This replaces both motor end positions. Stay with the blind and keep its path clear.
+    Complete both steps before closing this screen. Close the Tuiss phone app first.</p>
+  <p>Use small steps to reach each endpoint, then save it. Direction follows your Homey
+    <strong>Reverse direction</strong> setting. Do not use Flows or the phone app during setup.</p>
+  <p id="status" role="status" aria-live="polite">Ready to configure both limits.</p>
+  <p id="error" role="alert"></p>
+  <button id="start" data-action="start">Start setup</button>
+  <div id="controls" hidden>
+    <button data-action="up">Step up ↑</button>
+    <button data-action="down">Step down ↓</button>
+    <button data-action="stop">Stop</button>
+    <p><button id="save" data-action="save">Save endpoint</button></p>
+    <button data-action="close">Stop and end setup</button>
+  </div>
+  <button id="done" hidden>Close</button>
+  <p>After three minutes without a command, setup ends. If interrupted, set both limits
+    again in a new setup session or in the Tuiss app. Closing does not restore the old limits.</p>
+</div>
+<script>
+  (function () {
+    let pending = false;
+    const status = document.getElementById('status');
+    const error = document.getElementById('error');
+    const buttons = Array.from(document.querySelectorAll('[data-action]'));
+    function render(state) {
+      const active = state.phase === 'lower' || state.phase === 'upper';
+      const endpoint = (state.phase === 'lower') !== state.inverted ? 'lower / closed' : 'upper / open';
+      document.getElementById('start').hidden = state.phase !== 'ready';
+      document.getElementById('controls').hidden = !active;
+      document.getElementById('done').hidden = !['done', 'failed'].includes(state.phase);
+      buttons.forEach(button => { button.disabled = pending || state.busy; });
+      error.textContent = state.error || '';
+      if (active) {
+        status.textContent = (state.phase === 'lower' ? 'Step 1 of 2: ' : 'Step 2 of 2: ')
+          + 'move to the ' + endpoint + ' endpoint.' + (state.busy ? ' Sending command…' : '');
+        document.getElementById('save').textContent = 'Save ' + endpoint + ' limit';
+      } else {
+        status.textContent = { ready: 'Ready to configure both limits.',
+          connecting: 'Connecting to the motor…',
+          done: 'Both limit commands were sent. Close setup and check the full travel of your blind.',
+          failed: 'Setup ended. If calibration started, configure both limits again.' }[state.phase];
+      }
+    }
+    buttons.forEach(button => button.addEventListener('click', async () => {
+      if (pending) return;
+      pending = true;
+      buttons.forEach(item => { item.disabled = true; });
+      try { render(await Homey.emit('limits_action', button.dataset.action)); }
+      catch (err) { error.textContent = err.message || String(err); }
+      finally { pending = false; }
+    }));
+    document.getElementById('done').addEventListener('click', () => Homey.done());
+    async function poll() {
+      try { if (!pending) render(await Homey.emit('limits_status')); }
+      catch (err) { error.textContent = err.message || String(err); }
+      setTimeout(poll, 1000);
+    }
+    Homey.setTitle('Set limits');
+    poll();
+  })();
+</script>
