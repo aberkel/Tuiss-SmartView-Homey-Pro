@@ -1,6 +1,6 @@
 # Tuiss SmartView BLE for Homey Pro
 
-Version **0.2.1**. An experimental Homey SDK v3 app that controls Tuiss SmartView blinds locally over Bluetooth Low Energy (BLE). It does not require a separate remote control.
+Version **0.2.2**. An experimental Homey SDK v3 app that controls Tuiss SmartView blinds locally over Bluetooth Low Energy (BLE). It does not require a separate remote control.
 
 The app recognizes these advertised device names from Tuiss2HA: TS3000, TS5200, TS5300, TS2600, TS2900, TS5001, and TS5101. MRM-G2 and MHC-G2 are also included as possible names, although the model printed on a motor does not necessarily match its BLE advertisement. If the scan finds no recognized names, the pairing screen lists other connectable BLE devices so you can identify your motor by its address. Only select a device you can positively identify as your motor. The motor must be within Bluetooth range of your Homey Pro.
 
@@ -91,13 +91,21 @@ The implementation follows Tuiss2HA's limit-setting protocol. Software tests cov
 
 ## Connection behavior and limitations
 
-Version 0.2.1 retains the reconnection behavior tested with the TS5200 in version 0.1.5. The app releases the BLE connection after a command, normally after eight seconds or three seconds after receiving the target position. It also cleans up a connection dropped by the motor and scans again for the next command. The **Reverse direction** setting reverses commands, incoming position updates, and the position already shown in Homey.
+Version 0.2.2 retains the reconnection behavior tested with the TS5200 in version 0.1.5. The app releases the BLE connection after a command, normally after eight seconds or three seconds after receiving the target position. It also cleans up a connection dropped by the motor and scans again for the next command. The **Reverse direction** setting reverses commands, incoming position updates, and the position already shown in Homey.
 
 Homey acknowledges a control request immediately because discovering and connecting over BLE can take more than ten seconds. The command continues in the background, in order. If connecting or writing ultimately fails after retries, a warning appears on the device in Homey; a later successful command clears a normal connection warning. An incomplete limit setup warning remains until both endpoints are configured through Homey. A successful BLE write does not prove that the blind has finished moving.
 
 Position changes made in the Tuiss phone app are not automatically reflected in Homey. Bluetooth range, characteristics, notifications, and pairing may vary by motor. Homey Bridge as a BLE satellite has not been tested.
 
 To update an existing installation, run `npx homey app install` from the extracted `tuiss-homey` directory; do not use `--clean`. For live BLE logs, temporarily run `npx homey app run --remote` and issue a command in Homey. After stopping the debug run, reinstall the app with `npx homey app install`.
+
+## npm dependencies and auditing
+
+The app has no external npm dependencies. The Homey SDK used by `require('homey')` is supplied by the Homey app runtime; the `homey` package on npm is the CLI tool for your computer. Version 0.2.2 removes that tool and its dependency tree from the app's production dependencies.
+
+Install or update the CLI separately with `npm install -g homey`. Run `homey app install` or `homey app publish` from this directory; `npx homey` also works when the CLI is available. Updating the CLI may still report vulnerabilities in its own dependencies, which need separate assessment. Do not apply `npm audit fix --force` without reviewing the proposed changes.
+
+For this project, `npm install` should install no external packages. When updating an existing extracted directory, run it again to prune the old CLI dependencies. `npm audit` reports on this local project's packages, not on the SDK or firmware supplied by Homey. A project audit cannot certify the security of the Homey runtime or the global CLI.
 
 ## Attribution and license
 
